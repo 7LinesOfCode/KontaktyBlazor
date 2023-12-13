@@ -1,0 +1,165 @@
+﻿@page "/contact/new/"
+@inject IContactService _service
+@inject NavigationManager Navigation
+
+<div style="display: flex; align-items: center;">
+    <h3 style="margin-right: 10px;">Creating new contact</h3>
+    <button @onclick="BackToContacts">Back To Contact List</button>
+</div>
+<form @onsubmit="CreateContact">
+    <div>
+        <label for="FirstName">First Name:</label>
+        <input type="text" id="FirstName" @bind="FirstName" />
+    </div>
+    <div>
+        <label for="LastName">Last Name:</label>
+        <input type="text" id="LastName" @bind="LastName" />
+    </div>
+    <div>
+        <label for="Email">Email:</label>
+        <input type="email" id="Email" @bind="Email" />
+        @if (!IsValidEmail(Email))
+        {
+            <p style="color: red;">Invalid email format</p>
+        }
+    </div>
+    <div>
+        <label for="PhoneNumber">Phone Number:</label>
+        <input type="text" id="PhoneNumber" @bind="PhoneNumber" />
+        @if (!IsValidPhoneNumber(PhoneNumber))
+        {
+            <p style="color: red;">Invalid phone number format (9 digits only)</p>
+        }
+    </div>
+    <div>
+        <label for="BirthDay">Birth Day:</label>
+        <input type="date" id="BirthDay" @bind="BirthDay" />
+    </div>
+    <label>
+        Category:
+        <select @bind="CategoryId">
+            <option value="0">Category</option>
+            @foreach (var category in allCategories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+    </label>
+
+    @if (CategoryId == 1)
+    {
+        <label>
+            Sub Category:
+            <select @bind="SubCategoryId">
+                @foreach (var category in allSubCategoriesJob)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+        </label>
+    }
+    else if (CategoryId == 2)
+    {
+        SubCategoryId = 5;
+    }
+    else if (CategoryId == 3)
+    {
+        <label>
+            Your own sub category:
+            <input type="text" @bind="yourSubCatName" />
+        </label>
+    }
+
+    @if (CategoryId != 0 && SubCategoryId != 0)
+    {
+        <button type="submit">Create</button>
+    }
+    else if (CategoryId == 3)
+    {
+        <button type="submit">Create</button>
+    }
+</form>
+
+@code {
+    private string FirstName;
+    private string LastName;
+    private string Email;
+    private string PhoneNumber;
+    private DateTime BirthDay;
+    private int CategoryId;
+    private int SubCategoryId;
+
+    private List<CategoryVm> allCategories = new List<CategoryVm>();
+    private List<SubCategoryVm> allSubCategories = new List<SubCategoryVm>();
+    private IEnumerable<SubCategoryVm> allSubCategoriesJob = new List<SubCategoryVm>();
+    private IEnumerable<SubCategoryVm> allSubCategoriesPrivate = new List<SubCategoryVm>();
+
+    private string yourSubCatName;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            allCategories = await _service.GetCategoryList();
+            allSubCategories = await _service.GetSubCategoryList();
+            allSubCategoriesJob = allSubCategories.Where(sc => sc.CategoryId == 1);
+            allSubCategoriesPrivate = allSubCategories.Where(sc => sc.CategoryId == 2);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Wystąpił błąd: {ex.Message}");
+        }
+    }
+
+
+    private bool IsValidEmail(string email)
+    {
+        return email != null && email.Contains("@");
+    }
+
+    private bool IsValidPhoneNumber(string phoneNumber)
+    {
+        return phoneNumber != null && phoneNumber.Length == 9 && phoneNumber.All(char.IsDigit);
+    }
+
+    private async Task CreateContact()
+    {
+        if (!IsValidEmail(Email) || !IsValidPhoneNumber(PhoneNumber))
+        {
+            return;
+        }
+        if (CategoryId == 3)
+        {
+            await CreateNewSubCategory(yourSubCatName);
+        }
+        var newContactModel = new ContactDetailsVm();
+        newContactModel.FirstName = FirstName;
+        newContactModel.LastName = LastName;
+        newContactModel.Email = Email;
+        newContactModel.PhoneNumber = PhoneNumber;
+        newContactModel.BirthDay = BirthDay;
+        newContactModel.CategoryId = CategoryId;
+        newContactModel.SubCategoryId = SubCategoryId;
+
+        await _service.CreateNewContact(newContactModel);
+
+        BackToContacts();
+    }
+
+    private async Task CreateNewSubCategory(string yourSubCatName)
+    {
+        SubCategoryId = await _service.CreateNewSubCategory(yourSubCatName);
+    }
+
+    private void BackToContacts()
+    {
+        try
+        {
+            Navigation.NavigateTo($"/contacts");
+        }
+        catch (Exception)
+        { }
+    }
+}

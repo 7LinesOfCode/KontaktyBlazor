@@ -1,0 +1,81 @@
+﻿@page "/contact/details/{id:int}"
+@inject IContactService _contactService
+@inject NavigationManager Navigation
+
+<h3>Contact Details - @contact.FirstName @contact.LastName</h3>
+<div>
+    <dl>
+        <dt>ID:</dt>
+        <dd>@contact.Id</dd>
+
+        <dt>First Name:</dt>
+        <dd>@contact.FirstName</dd>
+
+        <dt>Last Name:</dt>
+        <dd>@contact.LastName</dd>
+
+        <dt>Email:</dt>
+        <dd>@contact.Email</dd>
+
+        <dt>Phone Number:</dt>
+        <dd>@contact.PhoneNumber</dd>
+
+        <dt>Birthday:</dt>
+        <dd>@contact.BirthDay.ToShortDateString()</dd>
+
+        <dt>Category:</dt>
+        <dd>@GetCatName(contact.CategoryId)</dd>
+        @if (contact.CategoryId != 2)
+        {
+            <dt>SubCategory:</dt>
+            <dd>@GetSubCatName(contact.SubCategoryId)</dd>
+        }
+
+    </dl>
+</div>
+
+<button class="btn btn-primary" @onclick="BackToContacts">Back To Contact List</button>
+
+@code {
+    [Parameter] public int id { get; set; }
+    private List<CategoryVm> categories = new List<CategoryVm>();
+    private List<SubCategoryVm> subCategories = new List<SubCategoryVm>();
+    private ContactDetailsVm contact = new ContactDetailsVm();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            contact = await _contactService.GetContactDetails(id);
+            categories = await _contactService.GetCategoryList();
+            subCategories = await _contactService.GetSubCategoryList();
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+    private string GetCatName(int categoryId)
+    {
+        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Name ?? "Unknown";
+    }
+
+    private string GetSubCatName(int categoryId)
+    {
+        var category = subCategories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Name ?? "Unknown";
+    }
+
+    private void BackToContacts()
+    {
+        try
+        {
+            Navigation.NavigateTo($"/contacts");
+        }
+        catch (Exception)
+        { }
+    }
+}

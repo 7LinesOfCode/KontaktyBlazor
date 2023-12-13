@@ -1,0 +1,177 @@
+﻿@page "/Contacts"
+@inject IContactService _contactService
+@inject NavigationManager Navigation
+
+<h3>Contacts</h3>
+
+<div>
+    <label for="searchString">Search:</label>
+    <input type="text" @bind="searchString" id="searchString" />
+</div>
+
+<div>
+    <label for="selectedCategory">Category:</label>
+    <select id="selectedCategory" @bind="selectedCategory">
+        <option value="">All</option>
+        @foreach (var category in categories)
+        {
+            <option value="@category.Id">@category.Name</option>
+        }
+    </select>
+</div>
+
+<button @onclick="ApplyFilters">Apply Filters</button>
+
+<button  @onclick="NavigateToCreateNewContact">New Contact</button>
+
+@if (viewModel == null)
+{
+    <p>Data hasn't loaded</p>
+}
+else if (viewModel.Contacts.Count == 0)
+{
+    <p>Not found Any Contact</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone Number</th>
+                <th>Category</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in viewModel.Contacts)
+            {
+                <tr>
+                    <td>@contact.FullName</td>
+                    <td>@contact.PhoneNumber</td>
+                    <td>@GetCategoryName(contact.CategoryId)</td>
+                    <td>
+                        <form @onsubmit="@(e => NavigateToContactDetails(contact.Id))">
+                            <button type="submit">Details</button>
+                        </form>
+
+                        <form @onsubmit="@(e => NavigateToContactEdit(contact.Id))">
+                            <button type="submit">Edit</button>
+                        </form>
+
+                        <form @onsubmit="@(e => DeleteContact(contact.Id))">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    @for (int i = 1; i <= Math.Ceiling(count / (double)pageSize); i++)
+                    {
+                        <li class="page-item @(i == currentlyPage ? "active" : "")">
+                            @if (i != currentlyPage)
+                            {
+                                <a href="javascript:void(0);" @onclick="() => PagerClick(i)" class="page-link">@i</a>
+                            }
+                            else
+                            {
+                                <span class="page-link">@i</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+}
+
+@code {
+    private ListContactForListVm viewModel;
+    private List<CategoryVm> categories = new List<CategoryVm>();
+    private int currentlyPage;
+    private int pageSize;
+    private int pageNo = 1;
+    public string searchString;
+    public int count;
+    public int? selectedCategory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            viewModel = await _contactService.GetListContactForListVm();
+            categories = await _contactService.GetCategoryList();
+
+            currentlyPage = viewModel.CurrentylPage;
+            pageSize = viewModel.PageSize;
+            searchString = viewModel.SearchString;
+            count = viewModel.Count;
+            selectedCategory = viewModel.SelectedCategoryId;
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        viewModel = await _contactService.PostListContactForListVm(pageSize, pageNo, searchString, selectedCategory);
+    }
+
+    private string GetCategoryName(int categoryId)
+    {
+        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Name ?? "Unknown";
+    }
+
+    private async Task DeleteContact(int id)
+    {
+        await _contactService.DeleteContact(id);
+        await OnInitializedAsync();
+    }
+
+    private void PagerClick(int index)
+    {
+        pageNo = index;
+        ApplyFilters();
+    }
+
+    private void NavigateToContactDetails(int id)
+    {
+        try
+        {
+            Navigation.NavigateTo($"/contact/details/{id}");
+        }
+        catch (Exception)
+        { }
+    }
+    private void NavigateToContactEdit(int id)
+    {
+        try
+        {
+            Navigation.NavigateTo($"/contact/edit/{id}");
+        }
+        catch (Exception)
+        { }
+    }
+    private void NavigateToCreateNewContact()
+    {
+        try
+        {
+            Navigation.NavigateTo("/contact/new/");
+        }
+        catch (Exception)
+        {
+            
+        }
+    }
+
+
+}

@@ -1,0 +1,160 @@
+﻿@page "/contact/edit/{id:int}"
+@inject IContactService _service;
+@inject NavigationManager Navigation;
+
+<h3>Contact Edit</h3>
+<button @onclick="BackToContacts">Back To Contact List</button>
+<form @onsubmit="SubmitEdit">
+    <div>
+        <label for="FirstName">First Name:</label>
+        <input type="text" id="FirstName" @bind="contactToEdit.FirstName" />
+    </div>
+    <div>
+        <label for="LastName">Last Name:</label>
+        <input type="text" id="LastName" @bind="contactToEdit.LastName" />
+    </div>
+    <div>
+        <label for="Email">Email:</label>
+        <input type="email" id="Email" @bind="contactToEdit.Email" />
+        @if (!IsValidEmail(contactToEdit.Email))
+        {
+                <p style="color: red;">Invalid email format</p>
+        }
+    </div>
+    <div>
+        <label for="PhoneNumber">Phone Number:</label>
+        <input type="text" id="PhoneNumber" @bind="contactToEdit.PhoneNumber" />
+        @if (!IsValidPhoneNumber(contactToEdit.PhoneNumber))
+        {
+                <p style="color: red;">Invalid phone number format (9 digits only)</p>
+        }
+    </div>
+    <div>
+        <label for="BirthDay">Birth Day:</label>
+        <input type="date" id="BirthDay" @bind="contactToEdit.BirthDay" />
+    </div>
+    <label>
+        Category:
+        <select @bind="contactToEdit.CategoryId">
+            <option value="0">Category</option>
+            @foreach (var category in allCategories)
+            {
+                    <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+    </label>
+
+    @if (contactToEdit.CategoryId == 1)
+    {
+            <label>
+                Sub Category:
+                <select @bind="contactToEdit.SubCategoryId">
+                @foreach (var category in allSubCategoriesJob)
+                {
+                            <option value="@category.Id">@category.Name</option>
+                }
+                </select>
+            </label>
+    }
+    else if (contactToEdit.CategoryId == 2)
+    {
+        contactToEdit.SubCategoryId = 5;
+    }
+    else if (contactToEdit.CategoryId == 3)
+    {
+            <label>
+                Your own sub category:
+                <input type="text" @bind="yourSubCatName" />
+            </label>
+    }
+
+    @if (contactToEdit.CategoryId != 0 && contactToEdit.SubCategoryId != 0)
+    {
+            <button type="submit">Save Changes</button>
+    }
+    else if (contactToEdit.CategoryId == 3)
+    {
+            <button type="submit">Save Changes</button>
+    }
+</form>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private List<CategoryVm> allCategories = new List<CategoryVm>();
+    private List<SubCategoryVm> allSubCategories = new List<SubCategoryVm>();
+    private IEnumerable<SubCategoryVm> allSubCategoriesJob = new List<SubCategoryVm>();
+    private IEnumerable<SubCategoryVm> allSubCategoriesPrivate = new List<SubCategoryVm>();
+
+    private string yourSubCatName;
+
+
+    public ContactDetailsVm contactToEdit = new ContactDetailsVm();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            contactToEdit = await _service.GetContactDetails(id);
+            allCategories = await _service.GetCategoryList();
+            allSubCategories = await _service.GetSubCategoryList();
+            allSubCategoriesJob = allSubCategories.Where(sc => sc.CategoryId == 1);
+            allSubCategoriesPrivate = allSubCategories.Where(sc => sc.CategoryId == 2);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task SubmitEdit()
+    {
+        try
+        {
+            if (!IsValidEmail(contactToEdit.Email) || !IsValidPhoneNumber(contactToEdit.PhoneNumber))
+            {
+                return;
+            }
+            if (contactToEdit.CategoryId == 3)
+            {
+                await CreateNewSubCategory(yourSubCatName);
+            }
+
+            await _service.UpdateContact(contactToEdit);
+            BackToContacts();
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    private async Task CreateNewSubCategory(string yourSubCatName)
+    {
+        contactToEdit.SubCategoryId = await _service.CreateNewSubCategory(yourSubCatName);
+    }
+
+    private void BackToContacts()
+    {
+        try
+        {
+            Navigation.NavigateTo($"/contacts");
+        }
+        catch (Exception)
+        { }
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        return email != null && email.Contains("@");
+    }
+
+    private bool IsValidPhoneNumber(string phoneNumber)
+    {
+        return phoneNumber != null && phoneNumber.Length == 9 && phoneNumber.All(char.IsDigit);
+    }
+
+}
