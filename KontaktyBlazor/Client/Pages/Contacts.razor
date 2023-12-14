@@ -1,6 +1,7 @@
 ﻿@page "/Contacts"
 @inject IContactService _contactService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <h3>Contacts</h3>
 
@@ -22,8 +23,11 @@
 
 <button @onclick="ApplyFilters">Apply Filters</button>
 
-<button  @onclick="NavigateToCreateNewContact">New Contact</button>
 
+@if (isAuthenticated)
+{
+    <button @onclick="NavigateToCreateNewContact">New Contact</button>
+}
 @if (viewModel == null)
 {
     <p>Data hasn't loaded</p>
@@ -55,13 +59,15 @@ else
                             <button type="submit">Details</button>
                         </form>
 
-                        <form @onsubmit="@(e => NavigateToContactEdit(contact.Id))">
-                            <button type="submit">Edit</button>
-                        </form>
-
-                        <form @onsubmit="@(e => DeleteContact(contact.Id))">
-                            <button type="submit">Delete</button>
-                        </form>
+                        @if (isAuthenticated)
+                        {
+                            <form @onsubmit="@(e => NavigateToContactEdit(contact.Id))">
+                                <button type="submit">Edit</button>
+                            </form>
+                            <form @onsubmit="@(e => DeleteContact(contact.Id))">
+                                <button type="submit">Delete</button>
+                            </form>
+                        }
                     </td>
                 </tr>
             }
@@ -101,10 +107,15 @@ else
     public int count;
     public int? selectedCategory;
 
+    private bool isAuthenticated;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            isAuthenticated = authState.User.Identity.IsAuthenticated;
+
             viewModel = await _contactService.GetListContactForListVm();
             categories = await _contactService.GetCategoryList();
 
@@ -170,7 +181,7 @@ else
         }
         catch (Exception)
         {
-            
+
         }
     }
 
