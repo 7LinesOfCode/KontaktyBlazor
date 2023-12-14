@@ -131,6 +131,7 @@ else
         return category?.Name ?? "Unknown";
     }
 
+
     private async Task DeleteContact(int id)
     {
         await _contactService.DeleteContact(id);

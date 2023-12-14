@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KontaktyBlazor.Client", "KontaktyBlazor\Client\KontaktyBlazor.Client.csproj", "{85099767-C4B9-4A55-BB05-ACFA55F856FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KontaktyBlazor.Client", "KontaktyBlazor\Client\KontaktyBlazor.Client.csproj", "{85099767-C4B9-4A55-BB05-ACFA55F856FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KontaktyBlazor.Shared", "KontaktyBlazor\Shared\KontaktyBlazor.Shared.csproj", "{0C442D95-796D-4124-8C22-AC2908B52B43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KontaktyBlazor.Shared", "KontaktyBlazor\Shared\KontaktyBlazor.Shared.csproj", "{0C442D95-796D-4124-8C22-AC2908B52B43}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
